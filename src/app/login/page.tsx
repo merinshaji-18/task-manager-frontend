@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext'; // 1. Import the Auth hook
-import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
+import axiosInstance from '@/lib/axios'; // Use your configured instance
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth(); // 2. Grab the login function from context
+  const { login } = useAuth();
   const router = useRouter();
   
   const handleLogin = async (e: React.FormEvent) => {
@@ -20,12 +20,10 @@ export default function LoginPage() {
       formData.append('username', email);
       formData.append('password', password);
 
-      // We call the backend directly here to get the token
-      const res = await axios.post('http://127.0.0.1:8000/login', formData);
+      // We use axiosInstance which already uses NEXT_PUBLIC_API_URL from your .env
+      const res = await axiosInstance.post('/login', formData);
       
-      // 3. Use the login function from AuthContext
-      // This function saves the token, fetches the user data, 
-      // AND handles the router.push('/tasks') for you.
+      // Use the login function from AuthContext
       await login(res.data.access_token);
       
     } catch (err) {
