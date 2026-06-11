@@ -58,7 +58,7 @@ export default function TaskListPage() {
     setTaskToDelete(id);
     setIsModalOpen(true);
   };
-
+  
   const confirmDelete = async () => {
     if (taskToDelete !== null) {
       try {
