@@ -72,7 +72,7 @@ export default function RegisterPage() {
           /* STEP 1: INFORMATION FORM */
           <form onSubmit={handleRequestOtp} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Email</label>
+              <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Email Address</label>
               <input 
                 type="email" 
                 required 

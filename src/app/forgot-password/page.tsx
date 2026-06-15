@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         
         <form onSubmit={handleRequest} className="space-y-6 text-left">
           <div className="space-y-2">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Account Email</label>
+            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Email Address</label>
             <input type="email" required placeholder="name@company.com" className="w-full bg-zinc-50 border-none p-4 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-zinc-800 transition-all" onChange={(e) => setEmail(e.target.value)} />
           </div>
           <button disabled={loading} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:bg-zinc-200">
