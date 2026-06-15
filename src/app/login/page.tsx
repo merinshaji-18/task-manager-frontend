@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import axiosInstance from '@/lib/axios';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ export default function LoginPage() {
       await login(res.data.access_token);
       
     } catch (err) {
-      alert("Invalid email or password. Please try again.");
+      toast.error("Authentication Failed", { description: "Invalid email or security code." });
     } finally {
       setLoading(false);
     }
