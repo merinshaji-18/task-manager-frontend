@@ -3,8 +3,14 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axiosInstance from '@/lib/axios';
 
+interface User {
+  email: string;
+  full_name?: string; // Optional
+  bio?: string;       // Optional
+}
+
 interface AuthContextType {
-  user: { email: string } | null;
+  user: User | null;
   loading: boolean;
   login: (token: string) => Promise<void>; // Added login
   logout: () => void;

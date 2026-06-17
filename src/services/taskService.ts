@@ -9,13 +9,14 @@ export const taskService = {
   },
 
   // 2. Create a new task
-  createTask: async (taskData: { title: string; description: string }): Promise<Task> => {
+// Inside your taskService object:
+  createTask: async (taskData: any): Promise<Task> => {
     const response = await axiosInstance.post('/tasks/', taskData);
     return response.data;
   },
 
   // 3. Update an existing task (The one that was red)
-  updateTask: async (id: number, taskData: { title: string; description: string, status: string }): Promise<Task> => {
+  updateTask: async (id: number, taskData:any): Promise<Task> => {
     const response = await axiosInstance.put(`/tasks/${id}`, taskData);
     return response.data;
   },
