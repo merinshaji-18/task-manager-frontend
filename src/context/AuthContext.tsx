@@ -5,14 +5,15 @@ import axiosInstance from '@/lib/axios';
 
 interface User {
   email: string;
-  full_name?: string; // Optional
-  bio?: string;       // Optional
+  full_name?: string;
+  bio?: string;
+  profile_pic?: string; // CRITICAL
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string) => Promise<void>; // Added login
+  login: (token: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -20,48 +21,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const refreshUser = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setUser(null);
       setLoading(false);
       return;
     }
     try {
       const res = await axiosInstance.get('/users/me');
-      setUser(res.data);
+      console.log("SERVER DATA ARRIVED:", res.data);
+      setUser(res.data); // Memory now holds the pic URL
     } catch (err) {
       localStorage.removeItem('token');
       setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- NEW: THE MISSING LOGIN FUNCTION ---
-  const login = async (token: string) => {
-    setLoading(true);
-    localStorage.setItem('token', token);
-    try {
-      // Fetch user info IMMEDIATELY so the state is ready
-      const res = await axiosInstance.get('/users/me');
-      setUser(res.data);
-      // Only redirect AFTER the user state is set
-      router.push('/tasks');
-    } catch (err) {
-      console.error("Login sync error:", err);
-      localStorage.removeItem('token');
-      alert("Session initialization failed.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => { refreshUser(); }, []);
+
+  const login = async (token: string) => {
+    localStorage.setItem('token', token);
+    await refreshUser();
+    router.push('/tasks');
+  };
 
   const logout = () => {
     localStorage.removeItem('token');
