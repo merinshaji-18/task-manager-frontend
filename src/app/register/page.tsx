@@ -11,9 +11,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState(''); // Initialized as empty string
   const [step, setStep] = useState(1); // 1 = Details, 2 = OTP
+  const [fullName, setFullName] = useState(''); // Step 3 field
+  const [bio, setBio] = useState(''); 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  
 
   // Step 1: Request OTP
   const handleRequestOtp = async (e: React.FormEvent) => {
