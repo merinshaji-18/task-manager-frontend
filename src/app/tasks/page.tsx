@@ -46,7 +46,7 @@ export default function TaskListPage() {
   const uniqueClients = new Set(tasks.map(t => t.category?.toLowerCase() || 'general')).size;
 
   const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || (task.category?.toLowerCase() || "").includes(searchQuery.toLowerCase());
     const matchesTab = activeFilter === 'all' || (activeFilter === 'urgent' && task.priority === 'urgent') || (activeFilter === 'pending' && task.status === 'pending') || (activeFilter === 'completed' && task.status === 'completed');
     return matchesSearch && matchesTab;
   });
@@ -79,12 +79,9 @@ export default function TaskListPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fc] relative overflow-hidden font-sans selection:bg-indigo-100 px-6 py-12">
-      {/* Background Blueprint Grid */}
       <div className="absolute inset-0 z-0 opacity-[0.3] pointer-events-none" style={{ backgroundImage: `linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
       <div className="relative z-10 max-w-6xl mx-auto">
-        
-        {/* REFINED HEADER */}
         <header className="flex justify-between items-center mb-12 bg-white/60 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white shadow-xl shadow-indigo-500/5">
           <div>
             <h1 className="text-4xl font-black tracking-tighter italic text-[#3e4362]">Control Center</h1>
@@ -97,19 +94,17 @@ export default function TaskListPage() {
                 <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{user?.email}</span>
              </div>
 
-             {/* AVATAR PORTAL */}
              <Link href="/profile" className="group relative shrink-0">
-                <div className="h-16 w-16 bg-white border-4 border-white shadow-2xl rounded-2xl flex items-center justify-center text-2xl font-black text-indigo-600 transition-all group-hover:scale-105 group-hover:shadow-indigo-500/20 active:scale-95 overflow-hidden">
-                   {user?.profile_pic ? (
-                      <img src={user.profile_pic} alt="Profile" className="h-full w-full object-cover"/>
-                   ) : (
-                      <span>{user?.full_name ? user.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}</span>
-                   )}
-                   <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                <div className="h-16 w-16 bg-white border-4 border-white shadow-2xl rounded-2xl flex items-center justify-center text-2xl font-black text-indigo-600 transition-all group-hover:scale-105 group-hover:shadow-indigo-500/20 overflow-hidden">
+                   {user?.profile_pic ? <img src={user.profile_pic} alt="Me" className="h-full w-full object-cover" /> : <span>{user?.full_name ? user.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}</span>}
                 </div>
              </Link>
 
              <div className="h-10 w-[1px] bg-slate-200 mx-2"></div>
+             
+             {/* NEW: VAULT LINK */}
+             <Link href="/vault" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5c59c2] hover:text-indigo-800 transition-colors">Vault</Link>
+             
              <button onClick={logout} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-rose-500 transition-colors">Exit</button>
              <Link href="/tasks/create" className="bg-indigo-600 text-white px-7 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 active:scale-95 transition-all text-xs tracking-widest uppercase">+ Task</Link>
           </div>
@@ -147,7 +142,6 @@ export default function TaskListPage() {
           </div>
         </div>
 
-        {/* TASK STREAM */}
         <div className="space-y-4">
           {sortedTasks.length === 0 ? (
              <div className="py-20 text-center bg-white/40 border-2 border-dashed border-slate-200 rounded-[2rem]">
@@ -157,7 +151,7 @@ export default function TaskListPage() {
             sortedTasks.map((task) => (
               <div key={task.id} className={`group bg-white border border-slate-200 p-8 rounded-[2.5rem] flex items-center justify-between transition-all duration-500 ${task.status === 'completed' ? 'opacity-40 grayscale' : 'hover:shadow-2xl hover:shadow-indigo-500/5 hover:border-indigo-100'}`}>
                 <div className="flex items-start gap-6">
-                  <button onClick={() => handleToggleStatus(task.id, task.status)} className={`mt-2 h-10 w-10 rounded-2xl flex items-center justify-center border-2 transition-all ${task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200 text-transparent hover:border-indigo-600'}`}>
+                  <button onClick={() => handleToggleStatus(task.id, task.status)} className={`mt-2 h-10 w-10 rounded-2xl flex items-center justify-center border-2 transition-all ${task.status === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-indigo-600'}`}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </button>
                   <div>
@@ -179,7 +173,6 @@ export default function TaskListPage() {
           )}
         </div>
       </div>
-
       <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={confirmDelete} title="Confirm Action" message="Permanently delete this objective from the workspace?" />
     </div>
   );
