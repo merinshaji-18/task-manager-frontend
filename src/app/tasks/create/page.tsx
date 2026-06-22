@@ -14,155 +14,104 @@ export default function CreateTaskPage() {
   const [category, setCategory] = useState('');
   const [dueDate, setDueDate] = useState('');
   
-  // States for Attachment Logic
-  const [attachments, setAttachments] = useState<{url: string, name: string, type: string}[]>([]);
+  const [subDrafts, setSubDrafts] = useState<string[]>([]);
+  const [currentSub, setCurrentSub] = useState('');
+  
+  const [fileDrafts, setFileDrafts] = useState<{url: string, name: string, type: string}[]>([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // --- Step 1: Upload to Cloudinary & store in local draft list ---
+  const getMinDateTime = () => {
+    const now = new Date();
+    // Adjust to local timezone string format
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(Date.now() - tzOffset).toISOString().slice(0, 16);
+    return localISOTime;
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
-
     try {
-      const cloudRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        { method: 'POST', body: formData }
-      );
-      const cloudData = await cloudRes.json();
-
-      // Store in local state (We link these after the task is created)
-      setAttachments(prev => [...prev, { 
-        url: cloudData.secure_url, 
-        name: file.name, 
-        type: file.type 
-      }]);
-
-      toast.success("File Prepared", { description: `${file.name} ready for vaulting.` });
-    } catch (error) {
-      toast.error("Upload Error");
-    } finally {
-      setUploading(false);
-    }
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+      const data = await res.json();
+      setFileDrafts([...fileDrafts, { url: data.secure_url, name: file.name, type: file.type }]);
+      toast.success("Asset Ready");
+    } finally { setUploading(false); }
   };
 
-  // --- Step 2: Create Task + Link all Assets ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // 1. Create the task
-      const newTask = await taskService.createTask({ 
-        title, 
-        description, 
-        priority, 
-        category: category || 'General', 
-        due_date: dueDate || null 
-      });
-
-      // 2. Link all uploaded assets to the new Task ID
-      if (attachments.length > 0) {
-        await Promise.all(attachments.map(file => 
-          axiosInstance.post(`/tasks/${newTask.id}/attachments`, {
-            file_url: file.url,
-            file_name: file.name,
-            file_type: file.type
-          })
-        ));
+      const task = await taskService.createTask({ title, description, priority, category: category || 'General', due_date: dueDate || null });
+      
+      // Link Subtasks
+      if (subDrafts.length > 0) {
+        await Promise.all(subDrafts.map(s => axiosInstance.post(`/tasks/${task.id}/subtasks`, { title: s })));
+      }
+      
+      // Link Attachments
+      if (fileDrafts.length > 0) {
+        await Promise.all(fileDrafts.map(f => axiosInstance.post(`/tasks/${task.id}/attachments`, { file_url: f.url, file_name: f.name, file_type: f.type })));
       }
 
-      toast.success("Objective Initialized", { description: "Workspace data and assets synchronized." });
+      toast.success("Node Operational");
       router.push('/tasks');
-    } catch {
-      toast.error("Initialization Failed");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center justify-center px-6 py-12 font-sans selection:bg-indigo-100">
-      <div className="w-full max-w-xl bg-white border border-zinc-200 p-12 rounded-[2.5rem] shadow-xl shadow-zinc-200/50 mb-6">
-        
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-extrabold text-zinc-900 tracking-tighter italic">New Objective</h1>
-          <p className="text-zinc-500 mt-2 font-medium">Define parameters for your next node.</p>
-        </div>
-        
+    <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center py-20 px-6 font-sans">
+      <div className="w-full max-w-xl bg-white border border-zinc-200 p-12 rounded-[2.5rem] shadow-xl mb-6">
+        <h1 className="text-4xl font-extrabold text-zinc-900 tracking-tighter italic text-center mb-10">Initiate Node</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Priority</label>
-              <select className="w-full bg-zinc-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800" value={priority} onChange={(e) => setPriority(e.target.value)}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Client Tag</label>
-              <input type="text" placeholder="e.g. Acme Corp" className="w-full bg-zinc-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800" value={category} onChange={(e) => setCategory(e.target.value)} />
-            </div>
+             <select className="bg-zinc-50 border-none p-4 rounded-2xl font-medium outline-none focus:ring-2 focus:ring-indigo-500" value={priority} onChange={(e) => setPriority(e.target.value)}>
+                <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option>
+             </select>
+             <input type="text" placeholder="Client Tag" className="bg-zinc-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium" onChange={(e) => setCategory(e.target.value)} />
           </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Title</label>
-            <input type="text" required placeholder="Objective name" className="w-full bg-zinc-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800" value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Notes</label>
-            <textarea rows={3} placeholder="Provide context..." className="w-full bg-zinc-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 ml-1">Deadline</label>
-            <input type="date" className="w-full bg-zinc-50 border-none p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          </div>
-
-          <button disabled={loading} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 disabled:bg-zinc-200 uppercase text-xs tracking-widest">
-            {loading ? "Syncing..." : "Initialize Task"}
-          </button>
+          <input type="text" required placeholder="Objective Title" className="w-full bg-zinc-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium" onChange={(e) => setTitle(e.target.value)} />
+          <textarea rows={2} placeholder="Node Parameters" className="w-full bg-zinc-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium" onChange={(e) => setDescription(e.target.value)} />
+          <input 
+                type="datetime-local" 
+                min={getMinDateTime()} 
+                className="w-full bg-zinc-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-zinc-800" 
+                onChange={(e) => setDueDate(e.target.value)} 
+            />
+          <button disabled={loading} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 uppercase text-xs tracking-widest">{loading ? "Synchronizing..." : "Initialize Workspace"}</button>
         </form>
       </div>
 
-      {/* DRAFT ASSETS SECTION */}
-      <div className="w-full max-w-xl bg-white border border-zinc-200 p-8 rounded-[2.5rem] shadow-sm flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-            <div>
-               <h2 className="text-xl font-bold text-zinc-900 tracking-tight">Attachment Pool</h2>
-               <p className="text-zinc-400 text-[10px] font-black uppercase tracking-widest mt-1 italic">Will be linked to this task</p>
-            </div>
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="bg-zinc-900 text-white px-6 py-3 rounded-2xl font-bold text-xs hover:bg-zinc-800 transition-all active:scale-95">
-               {uploading ? "Uploading..." : "+ Add Asset"}
-            </button>
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+      <div className="w-full max-w-xl grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Subtask Pool */}
+        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
+           <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4 italic">Checkpoints</h3>
+           <div className="flex gap-2 mb-4">
+             <input type="text" className="flex-1 bg-zinc-50 px-3 py-2 rounded-xl text-xs" placeholder="Add step..." value={currentSub} onChange={(e)=>setCurrentSub(e.target.value)} />
+             <button onClick={(e)=>{e.preventDefault(); if(currentSub){setSubDrafts([...subDrafts, currentSub]); setCurrentSub('')}}} className="bg-zinc-900 text-white px-3 rounded-xl font-bold">+</button>
+           </div>
+           <div className="flex flex-wrap gap-2">{subDrafts.map((s,i)=>(<span key={i} className="text-[9px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md border border-indigo-100 italic">✓ {s}</span>))}</div>
         </div>
 
-        {/* Show a list of files prepared for upload */}
-        {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-50">
-                {attachments.map((file, i) => (
-                    <div key={i} className="bg-zinc-50 px-3 py-1.5 rounded-lg text-[10px] font-bold text-zinc-600 border border-zinc-100">
-                        📎 {file.name}
-                    </div>
-                ))}
-            </div>
-        )}
+        {/* File Pool */}
+        <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm">
+           <h3 className="text-sm font-black uppercase tracking-widest text-zinc-400 mb-4 italic">Assets</h3>
+           <button onClick={(e)=>{e.preventDefault(); fileInputRef.current?.click()}} disabled={uploading} className="w-full bg-zinc-50 border border-zinc-200 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-100 transition-all">{uploading ? "Clouding..." : "+ Select File"}</button>
+           <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+           <div className="mt-4 flex flex-col gap-2">{fileDrafts.map((f,i)=>(<span key={i} className="text-[9px] font-bold text-zinc-400 truncate">📎 {f.name}</span>))}</div>
+        </div>
       </div>
 
-      <Link href="/tasks" className="mt-8 text-xs font-bold text-zinc-300 hover:text-zinc-900 uppercase tracking-[0.3em] transition-all italic underline decoration-2 underline-offset-8">
-          Cancel and Return
-      </Link>
+      <Link href="/tasks" className="mt-8 text-xs font-bold text-zinc-300 hover:text-zinc-900 uppercase tracking-[0.4em] transition-all italic underline decoration-2 underline-offset-8">Cancel Node Activation</Link>
     </div>
   );
 }

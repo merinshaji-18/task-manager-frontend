@@ -7,7 +7,8 @@ interface User {
   email: string;
   full_name?: string;
   bio?: string;
-  profile_pic?: string; // CRITICAL
+  profile_pic?: string;
+  is_admin?: boolean; // CRITICAL
 }
 
 interface AuthContextType {
