@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/context/AuthContext";
+import Navbar from "@/components/layout/Navbar";
 import { Toaster } from "sonner"; // 1. Import Toaster
 import "./globals.css";
 
@@ -7,7 +8,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+          <Navbar /> {/* 1. Add Navbar here */}
+          <main className="pt-16"> {/* 2. Add padding top so content isn't hidden under Navbar */}
+            {children}
+          </main>
           {/* 2. Add Toaster here */}
           <Toaster 
             position="top-center" 
