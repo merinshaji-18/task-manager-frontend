@@ -148,9 +148,8 @@ export default function EditTaskPage() {
         <header className="mb-10 flex justify-between items-end px-2">
           <div className="text-left">
             <h1 className="text-4xl font-black tracking-tighter italic text-[#3e4362]">Calibrate Node</h1>
-            <p className="text-[#717694] text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">System Registry: {taskId}</p>
           </div>
-          <Link href={`/tasks/${taskId}`} className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-indigo-600 transition-all italic underline underline-offset-8 decoration-2">Cancel Calibration</Link>
+          <Link href={`/tasks/${taskId}`} className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-rose-400 transition-all italic underline underline-offset-8 decoration-2">Cancel Calibration</Link>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">

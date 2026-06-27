@@ -3,9 +3,13 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
+import NotificationPopup from "@/components/NotificationPopup";
 
 export default function Navbar() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading,
+  notifications,
+  showNotifications,
+  setShowNotifications } = useAuth();
   const pathname = usePathname();
 
   // 1. Hide Navbar if user is not logged in or on Auth pages
@@ -68,6 +72,12 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+      {showNotifications && (
+  <NotificationPopup
+    tasks={notifications}
+    onClose={() => setShowNotifications(false)}
+  />
+)}
     </nav>
   );
 }
