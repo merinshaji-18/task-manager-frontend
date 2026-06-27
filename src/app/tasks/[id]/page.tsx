@@ -73,7 +73,7 @@ export default function TaskInsightPage() {
         {/* COMPACT TOP NAV */}
         <div className="mb-6 flex justify-between items-center px-2 text-left">
           <Link href="/tasks" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-indigo-600 transition-all italic underline underline-offset-8 decoration-2">← Back to Stream</Link>
-          <div className="bg-zinc-900 text-white px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase">Registry: {id}</div>
+          
         </div>
 
         {/* HEADER & METRICS */}

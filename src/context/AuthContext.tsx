@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axiosInstance from '@/lib/axios';
+import { taskService } from '@/services/taskService';
+
 
 interface User {
   email: string;
@@ -17,6 +19,9 @@ interface AuthContextType {
   login: (token: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  notifications: any[];
+  showNotifications: boolean;
+  setShowNotifications: (value: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +29,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false); 
+
   const router = useRouter();
 
   const refreshUser = async () => {
@@ -35,7 +43,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await axiosInstance.get('/users/me');
       console.log("SERVER DATA ARRIVED:", res.data);
-      setUser(res.data); // Memory now holds the pic URL
+      setUser(res.data);
+      try {
+  const upcoming =
+    await taskService.getUpcomingNotifications();
+
+  if (upcoming.length > 0) {
+    setNotifications(upcoming);
+    setShowNotifications(true);
+  }
+} catch {} // Memory now holds the pic URL
     } catch (err) {
       localStorage.removeItem('token');
       setUser(null);
@@ -59,7 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser,
+    notifications,
+    showNotifications,
+    setShowNotifications }}>
       {children}
     </AuthContext.Provider>
   );

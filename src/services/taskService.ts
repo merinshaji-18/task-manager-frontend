@@ -25,9 +25,15 @@ export const taskService = {
   deleteTask: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/tasks/${id}`);
   },
-
+  
   async toggleTaskStatus(id: number, status: string): Promise<Task> {
   const response = await axiosInstance.patch(`/tasks/${id}`, { status });
+  return response.data;
+    },
+  getUpcomingNotifications: async () => {
+    const response = await axiosInstance.get(
+    "/tasks/notifications/upcoming"
+  );
   return response.data;
 }
 };
