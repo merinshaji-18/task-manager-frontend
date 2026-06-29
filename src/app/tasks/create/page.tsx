@@ -47,26 +47,63 @@ export default function CreateTaskPage() {
     } finally { setUploading(false); }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title) return;
+    
     setLoading(true);
+    const toastId = toast.loading("Verifying Time Slot Availability...");
+    
     try {
-      const task = await taskService.createTask({ title, description, priority, category: category || 'General', due_date: dueDate || null });
-      
-      // Link Subtasks
-      if (subDrafts.length > 0) {
-        await Promise.all(subDrafts.map(s => axiosInstance.post(`/tasks/${task.id}/subtasks`, { title: s })));
-      }
-      
-      // Link Attachments
-      if (fileDrafts.length > 0) {
-        await Promise.all(fileDrafts.map(f => axiosInstance.post(`/tasks/${task.id}/attachments`, { file_url: f.url, file_name: f.name, file_type: f.type })));
+      // 1. Create the Main Task
+      // Ensure taskService.createTask returns the actual data object containing the ID
+      const task = await taskService.createTask({ 
+        title, 
+        description, 
+        priority, 
+        category: category || 'General', 
+        due_date: dueDate || null 
+      });
+
+      if (!task || !task.id) {
+        throw new Error("Task ID not returned from server");
       }
 
-      toast.success("Node Operational");
+      // 2. Link Subtasks (Use task.id)
+      if (subDrafts.length > 0) {
+        await Promise.all(
+          subDrafts.map(s => 
+            axiosInstance.post(`/tasks/${task.id}/subtasks`, { title: s })
+          )
+        );
+      }
+      
+      // 3. Link Attachments (Use task.id)
+      if (fileDrafts.length > 0) {
+        await Promise.all(
+          fileDrafts.map(f => 
+            axiosInstance.post(`/tasks/${task.id}/attachments`, { 
+              file_url: f.url, 
+              file_name: f.name, 
+              file_type: f.type 
+            })
+          )
+        );
+      }
+
+      toast.success("Node Operational", { id: toastId });
       router.push('/tasks');
+    } catch (err: any) {
+      // --- NEW: HANDLE COLLISION ERROR ---
+      const errorMessage = err.response?.data?.detail || "Initialization Failed";
+      
+      toast.error("Operation Blocked", { 
+          id: toastId,
+          description: errorMessage, // This will say "Collision detected with [Task Name]"
+          style: { background: '#fff', border: '2px solid #e11d48', color: '#e11d48' }
+      });
     } finally { setLoading(false); }
-  };
+};
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] flex flex-col items-center py-20 px-6 font-sans">

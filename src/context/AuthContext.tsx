@@ -10,7 +10,9 @@ interface User {
   full_name?: string;
   bio?: string;
   profile_pic?: string;
-  is_admin?: boolean; // CRITICAL
+  is_admin?: boolean; 
+  google_access_token?: string | null;
+  google_refresh_token?: string | null;// CRITICAL
 }
 
 interface AuthContextType {
