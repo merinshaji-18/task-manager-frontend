@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { taskService } from '@/services/taskService';
 import { Task } from '@/types/task';
@@ -10,7 +10,8 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'sonner';
 
-export default function TaskListPage() {
+
+function TaskListContent() {
   const { user, loading: authLoading, logout } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksLoading, setTasksLoading] = useState(true);
@@ -248,5 +249,18 @@ export default function TaskListPage() {
       </div>
       <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={() => { if(taskToDelete){ taskService.deleteTask(taskToDelete); setTasks(tasks.filter(t=>t.id !== taskToDelete)); setIsModalOpen(false); toast.error("Node Terminated"); }}} title="Confirm Action" message="Permanently delete objective?" />
     </div>
+  );
+}
+export default function TaskListPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <TaskListContent />
+    </Suspense>
   );
 }
